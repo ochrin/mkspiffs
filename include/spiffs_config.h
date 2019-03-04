@@ -124,7 +124,7 @@ typedef uint8_t u8_t;
 
 // Enable/disable statistics on caching. Debug/test purpose only.
 #ifndef  SPIFFS_CACHE_STATS
-#define SPIFFS_CACHE_STATS              0
+#define SPIFFS_CACHE_STATS              1
 #endif
 #endif
 
@@ -136,12 +136,12 @@ typedef uint8_t u8_t;
 
 // Define maximum number of gc runs to perform to reach desired free pages.
 #ifndef SPIFFS_GC_MAX_RUNS
-#define SPIFFS_GC_MAX_RUNS              10
+#define SPIFFS_GC_MAX_RUNS              5
 #endif
 
 // Enable/disable statistics on gc. Debug/test purpose only.
 #ifndef SPIFFS_GC_STATS
-#define SPIFFS_GC_STATS                 0
+#define SPIFFS_GC_STATS                 1
 #endif
 
 // Garbage collecting examines all pages in a block which and sums up
@@ -185,7 +185,7 @@ typedef uint8_t u8_t;
 // Lower value generates more read/writes. No meaning having it bigger
 // than logical page size.
 #ifndef SPIFFS_COPY_BUFFER_STACK
-#define SPIFFS_COPY_BUFFER_STACK        (256)
+#define SPIFFS_COPY_BUFFER_STACK        (64)
 #endif
 
 // Enable this to have an identifiable spiffs filesystem. This will look for
@@ -193,7 +193,7 @@ typedef uint8_t u8_t;
 // not on mount point. If not, SPIFFS_format must be called prior to mounting
 // again.
 #ifndef SPIFFS_USE_MAGIC
-#define SPIFFS_USE_MAGIC                (1)
+#define SPIFFS_USE_MAGIC                (0)
 #endif
 
 #if SPIFFS_USE_MAGIC
@@ -222,7 +222,7 @@ typedef uint8_t u8_t;
 
 // Enable this if your target needs aligned data for index tables
 #ifndef SPIFFS_ALIGNED_OBJECT_INDEX_TABLES
-#define SPIFFS_ALIGNED_OBJECT_INDEX_TABLES      0
+#define SPIFFS_ALIGNED_OBJECT_INDEX_TABLES      1
 #endif
 
 // Enable this if you want the HAL callbacks to be called with the spiffs struct
