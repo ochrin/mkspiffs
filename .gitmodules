@@ -1,3 +1,4 @@
 [submodule "spiffs"]
 	path = spiffs
-	url = https://github.com/pellepl/spiffs.git
+	url = git@github.com:ochrin/spiffs.git
+	branch = esp8266 
