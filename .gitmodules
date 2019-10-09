@@ -1,4 +1,3 @@
 [submodule "spiffs"]
 	path = spiffs
 	url = git@github.com:ochrin/spiffs.git
-	branch = master 
