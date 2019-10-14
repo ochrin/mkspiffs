@@ -11,6 +11,16 @@
 // ----------- 8< ------------
 // Following includes are for the linux test build of spiffs
 // These may/should/must be removed/altered/replaced in your target
+//#include "params_test.h"
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//#include <stddef.h>
+//#include <unistd.h>
+//#ifdef _SPIFFS_TEST
+//#include "testrunner.h"
+//#endif
+// ----------- >8 ------------
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,41 +29,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <sdkconfig.h>
-
-// Rename defines from menuconfig if present from sdkconfig.h
-#ifdef CONFIG_SPIFFS_USE_MAGIC_LENGTH
-#define SPIFFS_USE_MAGIC_LENGTH CONFIG_SPIFFS_USE_MAGIC_LENGTH
-#endif
-#ifdef CONFIG_SPIFFS_CACHE_WR
-#define SPIFFS_CACHE_WR CONFIG_SPIFFS_CACHE_WR
-#endif
-#ifdef CONFIG_SPIFFS_CACHE
-#define SPIFFS_CACHE CONFIG_SPIFFS_CACHE
-#endif
-#ifdef CONFIG_SPIFFS_META_LENGTH
-#define SPIFFS_OBJ_META_LEN CONFIG_SPIFFS_META_LENGTH
-#endif
-#ifdef CONFIG_SPIFFS_USE_MAGIC
-#define SPIFFS_USE_MAGIC CONFIG_SPIFFS_USE_MAGIC
-#endif
-#ifdef CONFIG_SPIFFS_PAGE_CHECK
-#define SPIFFS_PAGE_CHECK CONFIG_SPIFFS_PAGE_CHECK
-#endif
-#ifdef CONFIG_SPIFFS_USE_MTIME
-#define SPIFFS_USE_MTIME CONFIG_SPIFFS_USE_MTIME
-#endif
-#ifdef CONFIG_SPIFFS_GC_MAX_RUNS
-#define SPIFFS_GC_MAX_RUNS CONFIG_SPIFFS_GC_MAX_RUNS
-#endif
-#ifdef CONFIG_SPIFFS_MAX_PARTITIONS
-#define SPIFFS_MAX_PARTITIONS CONFIG_SPIFFS_MAX_PARTITIONS
-#endif
-#ifdef CONFIG_SPIFFS_OBJ_NAME_LEN
-#define SPIFFS_OBJ_NAME_LEN CONFIG_SPIFFS_OBJ_NAME_LEN
-#endif
-#ifdef CONFIG_SPIFFS_PAGE_SIZE
-#define SPIFFS_PAGE_SIZE CONFIG_SPIFFS_PAGE_SIZE
-#endif
+// compile time switches
 
 // Set generic spiffs debug output call.
 #ifndef SPIFFS_DBG
@@ -85,23 +61,40 @@ typedef uint16_t u16_t;
 typedef int8_t s8_t;
 typedef uint8_t u8_t;
 
+
 // Defines spiffs debug print formatters
 // some general signed number
+#ifndef _SPIPRIi
 #define _SPIPRIi   "%d"
+#endif
 // address
+#ifndef _SPIPRIad
 #define _SPIPRIad  "%08x"
+#endif
 // block
+#ifndef _SPIPRIbl
 #define _SPIPRIbl  "%04x"
+#endif
 // page
+#ifndef _SPIPRIpg
 #define _SPIPRIpg  "%04x"
+#endif
 // span index
+#ifndef _SPIPRIsp
 #define _SPIPRIsp  "%04x"
+#endif
 // file descriptor
+#ifndef _SPIPRIfd
 #define _SPIPRIfd  "%d"
+#endif
 // file object id
+#ifndef _SPIPRIid
 #define _SPIPRIid  "%04x"
+#endif
 // file flags
+#ifndef _SPIPRIfl
 #define _SPIPRIfl  "%02x"
+#endif
 
 
 // Enable/disable API functions to determine exact number of bytes
@@ -114,7 +107,7 @@ typedef uint8_t u8_t;
 // Enables/disable memory read caching of nucleus file system operations.
 // If enabled, memory area must be provided for cache in SPIFFS_mount.
 #ifndef  SPIFFS_CACHE
-#define SPIFFS_CACHE                    1
+#define SPIFFS_CACHE                    0
 #endif
 #if SPIFFS_CACHE
 // Enables memory write caching for file descriptors in hydrogen
@@ -136,7 +129,7 @@ typedef uint8_t u8_t;
 
 // Define maximum number of gc runs to perform to reach desired free pages.
 #ifndef SPIFFS_GC_MAX_RUNS
-#define SPIFFS_GC_MAX_RUNS              10
+#define SPIFFS_GC_MAX_RUNS              5
 #endif
 
 // Enable/disable statistics on gc. Debug/test purpose only.
@@ -153,12 +146,18 @@ typedef uint8_t u8_t;
 // picked for garbage collection.
 
 // Garbage collecting heuristics - weight used for deleted pages.
+#ifndef SPIFFS_GC_HEUR_W_DELET
 #define SPIFFS_GC_HEUR_W_DELET          (5)
+#endif
 // Garbage collecting heuristics - weight used for used pages.
+#ifndef SPIFFS_GC_HEUR_W_USED
 #define SPIFFS_GC_HEUR_W_USED           (-1)
+#endif
 // Garbage collecting heuristics - weight used for time between
 // last erased and erase of this block.
+#ifndef SPIFFS_GC_HEUR_W_ERASE_AGE
 #define SPIFFS_GC_HEUR_W_ERASE_AGE      (50)
+#endif
 
 // Object name maximum length. Note that this length include the
 // zero-termination character, meaning maximum string of characters
@@ -211,23 +210,49 @@ typedef uint8_t u8_t;
 // These should be defined on a multithreaded system
 
 // define this to enter a mutex if you're running on a multithreaded system
+#ifndef SPIFFS_LOCK
 #define SPIFFS_LOCK(fs)
+#endif
 // define this to exit a mutex if you're running on a multithreaded system
+#ifndef SPIFFS_UNLOCK
 #define SPIFFS_UNLOCK(fs)
+#endif
 
 // Enable if only one spiffs instance with constant configuration will exist
 // on the target. This will reduce calculations, flash and memory accesses.
 // Parts of configuration must be defined below instead of at time of mount.
+#ifndef SPIFFS_SINGLETON
 #define SPIFFS_SINGLETON 0
+#endif
+
+#if SPIFFS_SINGLETON
+// Instead of giving parameters in config struct, singleton build must
+// give parameters in defines below.
+#ifndef SPIFFS_CFG_PHYS_SZ
+#define SPIFFS_CFG_PHYS_SZ(ignore)        (1024*1024*2)
+#endif
+#ifndef SPIFFS_CFG_PHYS_ERASE_SZ
+#define SPIFFS_CFG_PHYS_ERASE_SZ(ignore)  (65536)
+#endif
+#ifndef SPIFFS_CFG_PHYS_ADDR
+#define SPIFFS_CFG_PHYS_ADDR(ignore)      (0)
+#endif
+#ifndef SPIFFS_CFG_LOG_PAGE_SZ
+#define SPIFFS_CFG_LOG_PAGE_SZ(ignore)    (256)
+#endif
+#ifndef SPIFFS_CFG_LOG_BLOCK_SZ
+#define SPIFFS_CFG_LOG_BLOCK_SZ(ignore)   (65536)
+#endif
+#endif
 
 // Enable this if your target needs aligned data for index tables
 #ifndef SPIFFS_ALIGNED_OBJECT_INDEX_TABLES
-#define SPIFFS_ALIGNED_OBJECT_INDEX_TABLES      1
+#define SPIFFS_ALIGNED_OBJECT_INDEX_TABLES       1
 #endif
 
 // Enable this if you want the HAL callbacks to be called with the spiffs struct
 #ifndef SPIFFS_HAL_CALLBACK_EXTRA
-#define SPIFFS_HAL_CALLBACK_EXTRA               0
+#define SPIFFS_HAL_CALLBACK_EXTRA         0
 #endif
 
 // Enable this if you want to add an integer offset to all file handles
@@ -237,7 +262,7 @@ typedef uint8_t u8_t;
 // NB: This adds config field fh_ix_offset in the configuration struct when
 // mounting, which must be defined.
 #ifndef SPIFFS_FILEHDL_OFFSET
-#define SPIFFS_FILEHDL_OFFSET                   0
+#define SPIFFS_FILEHDL_OFFSET                 0
 #endif
 
 // Enable this to compile a read only version of spiffs.
@@ -251,7 +276,7 @@ typedef uint8_t u8_t;
 // returned.
 // Might be useful for e.g. bootloaders and such.
 #ifndef SPIFFS_READ_ONLY
-#define SPIFFS_READ_ONLY                        0
+#define SPIFFS_READ_ONLY                      0
 #endif
 
 // Enable this to add a temporal file cache using the fd buffer.
@@ -273,7 +298,7 @@ typedef uint8_t u8_t;
 // directly. If all available descriptors become opened, all cache memory is
 // lost.
 #ifndef SPIFFS_TEMPORAL_FD_CACHE
-#define SPIFFS_TEMPORAL_FD_CACHE                1
+#define SPIFFS_TEMPORAL_FD_CACHE              1
 #endif
 
 // Temporal file cache hit score. Each time a file is opened, all cached files
@@ -282,7 +307,7 @@ typedef uint8_t u8_t;
 // value for the specific access patterns of the application. However, it must
 // be between 1 (no gain for hitting a cached entry often) and 255.
 #ifndef SPIFFS_TEMPORAL_CACHE_HIT_SCORE
-#define SPIFFS_TEMPORAL_CACHE_HIT_SCORE         4
+#define SPIFFS_TEMPORAL_CACHE_HIT_SCORE       4
 #endif
 
 // Enable to be able to map object indices to memory.
@@ -298,12 +323,23 @@ typedef uint8_t u8_t;
 // file is modified in some way. The index buffer is tied to the file
 // descriptor.
 #ifndef SPIFFS_IX_MAP
-#define SPIFFS_IX_MAP                           1
+#define SPIFFS_IX_MAP                         1
+#endif
+
+// By default SPIFFS in some cases relies on the property of NOR flash that bits
+// cannot be set from 0 to 1 by writing and that controllers will ignore such
+// bit changes. This results in fewer reads as SPIFFS can in some cases perform
+// blind writes, with all bits set to 1 and only those it needs reset set to 0.
+// Most of the chips and controllers allow this behavior, so the default is to
+// use this technique. If your controller is one of the rare ones that don't,
+// turn this option on and SPIFFS will perform a read-modify-write instead.
+#ifndef SPIFFS_NO_BLIND_WRITES
+#define SPIFFS_NO_BLIND_WRITES                0
 #endif
 
 // Set SPIFFS_TEST_VISUALISATION to non-zero to enable SPIFFS_vis function
 // in the api. This function will visualize all filesystem using given printf
-// function..
+// function.
 #ifndef SPIFFS_TEST_VISUALISATION
 #define SPIFFS_TEST_VISUALISATION         1
 #endif
@@ -312,13 +348,21 @@ typedef uint8_t u8_t;
 #define spiffs_printf(...)                printf(__VA_ARGS__)
 #endif
 // spiffs_printf argument for a free page
+#ifndef SPIFFS_TEST_VIS_FREE_STR
 #define SPIFFS_TEST_VIS_FREE_STR          "_"
+#endif
 // spiffs_printf argument for a deleted page
+#ifndef SPIFFS_TEST_VIS_DELE_STR
 #define SPIFFS_TEST_VIS_DELE_STR          "/"
+#endif
 // spiffs_printf argument for an index page for given object id
+#ifndef SPIFFS_TEST_VIS_INDX_STR
 #define SPIFFS_TEST_VIS_INDX_STR(id)      "i"
+#endif
 // spiffs_printf argument for a data page for given object id
+#ifndef SPIFFS_TEST_VIS_DATA_STR
 #define SPIFFS_TEST_VIS_DATA_STR(id)      "d"
+#endif
 #endif
 
 // Types depending on configuration such as the amount of flash bytes
